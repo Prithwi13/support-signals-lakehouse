@@ -27,7 +27,7 @@ flowchart LR
       SV[(silver<br/>typed, deduped<br/>Parquet)]
       GD[(gold<br/>facts + dims<br/>Parquet)]
     end
-    RS[(Redshift Serverless<br/>gold + marts)]
+    RS[(Athena / Redshift<br/>gold + marts)]
     BI[Dashboard<br/>Streamlit / QuickSight]
     CW[CloudWatch metrics<br/>+ alarms → SNS]
 
@@ -43,7 +43,7 @@ The same code runs in two places:
 |---|---|---|
 | Storage | `./data` | `s3://…/lake` |
 | Spark | local PySpark | AWS Glue 5.0 job |
-| Warehouse | DuckDB | Redshift Serverless (Data API) |
+| Warehouse | DuckDB | Athena + Glue Data Catalog (default), or Redshift Serverless via the Data API (`enable_redshift = true`, paid-plan accounts) |
 | Orchestration | Airflow in Docker | Airflow triggering Glue (MWAA optional) |
 | DQ alerts | JSON report | CloudWatch metrics → alarm → SNS email |
 
@@ -59,7 +59,7 @@ Switching between them is a config change (`SIGNALS_STORAGE_ROOT=s3://…`), not
 | Data quality + monitoring | `config/quality.yaml` + `src/signals/quality/checks.py`: 19 declarative checks, CloudWatch metrics, alarms |
 | Late data, schema drift, idempotency | Silver merge rules, a drift detector, versioned snapshots that are safe to retry |
 | Orchestration | `dags/support_signals_dag.py`: retries with exponential backoff, SLA, `max_active_runs=1`, full-refresh backfill |
-| Infrastructure as code | `infra/terraform/`: S3, Glue, IAM (least privilege), Redshift Serverless, CloudWatch, SNS, EventBridge, budget alarm |
+| Infrastructure as code | `infra/terraform/`: S3, Glue, Glue Data Catalog + Athena, IAM (least privilege), optional Redshift Serverless, CloudWatch, SNS, EventBridge, budget alarm |
 | Partnering with data scientists | `src/signals/ml/features.py`: leak-free features, time-based split, scores written back to gold |
 | Self-service reporting | `sql/marts/*.sql` + `dashboard/app.py` |
 | CI | `.github/workflows/ci.yml`: lint, unit + end-to-end tests, DAG integrity check, `terraform validate` |
@@ -124,7 +124,7 @@ python -m signals ingest && make airflow   # with SIGNALS_RUN_MODE=aws the Spark
 make tf-destroy                 # tear everything down when you're done
 ```
 
-**Cost control:** Redshift Serverless runs at the minimum 8 RPU and bills only while queries run. Glue uses 2 G.1X workers and runs for a few minutes a day. Bronze data moves to S3 Infrequent Access after 30 days. A budget alarm emails you at 80% of `$20/month`. MWAA is optional because local Airflow can trigger Glue.
+**Cost control:** Athena bills per query and the workgroup caps each query at 1 GiB scanned. Redshift Serverless is off by default; when enabled it runs at the minimum 8 RPU and bills only while queries run. Glue uses 2 G.1X workers and runs for a few minutes a day. Bronze data moves to S3 Infrequent Access after 30 days. A budget alarm emails you at 80% of `$20/month`. MWAA is optional because local Airflow can trigger Glue.
 
 ## Results from the first real run (24 Sep 2026)
 
