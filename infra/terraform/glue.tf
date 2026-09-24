@@ -63,7 +63,7 @@ resource "aws_glue_job" "spark" {
   default_arguments = {
     "--extra-py-files"                   = "s3://${aws_s3_bucket.lake.id}/${aws_s3_object.package.key}"
     "--extra-files"                      = join(",", [for o in aws_s3_object.config : "s3://${aws_s3_bucket.lake.id}/${o.key}"])
-    "--additional-python-modules"        = "scikit-learn==1.5.2"
+    "--additional-python-modules"        = "pyyaml,scikit-learn==1.5.2"
     "--storage_root"                     = local.data_root
     "--state_root"                       = local.state_root
     "--stage_args"                       = "silver"
