@@ -11,7 +11,7 @@ import time
 from typing import Any
 
 from signals.config import REPO_ROOT, Config
-from signals.transform.spark import current_version
+from signals.snapshots import current_version
 from signals.warehouse.load_duckdb import GOLD_TABLES
 from signals.warehouse.load_redshift import _split
 

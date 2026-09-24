@@ -12,7 +12,7 @@ import os
 from typing import Any
 
 from signals.config import REPO_ROOT, Config
-from signals.transform.spark import current_version
+from signals.snapshots import current_version
 
 log = logging.getLogger(__name__)
 GOLD_TABLES = ["dim_date", "dim_repo", "dim_service", "dim_issue_scd2", "bridge_issue_label", "fact_issue"]
