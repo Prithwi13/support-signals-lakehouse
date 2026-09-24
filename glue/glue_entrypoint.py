@@ -21,4 +21,7 @@ os.environ.setdefault("SIGNALS_CONFIG_DIR", os.getcwd())
 
 from signals.cli import main  # noqa: E402
 
-sys.exit(main(shlex.split(args["stage_args"])))
+# Glue marks a job FAILED on any SystemExit, even exit code 0, so only raise on errors.
+rc = main(shlex.split(args["stage_args"]))
+if rc:
+    raise RuntimeError(f"stage failed with exit code {rc}")
