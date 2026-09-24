@@ -6,7 +6,7 @@
     python -m signals gold
     python -m signals dq --layer gold
     python -m signals ml
-    python -m signals load --target duckdb|redshift
+    python -m signals load --target duckdb|athena|redshift
     python -m signals all            # everything, in order (local dev)
 """
 from __future__ import annotations
@@ -35,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--layer", choices=["silver", "gold"], help="for the dq stage")
     ap.add_argument("--full-refresh", action="store_true", 
                     help="rebuild silver from all bronze and gold SCD2 from scratch")
-    ap.add_argument("--target", choices=["duckdb", "redshift"], default="duckdb")
+    ap.add_argument("--target", choices=["duckdb", "athena", "redshift"], default="duckdb")
     ap.add_argument("--cloudwatch", action="store_true", help="publish DQ metrics to CloudWatch")
     ap.add_argument("--snapshot-at", default=None, help="'YYYY-MM-DD HH:MM:SS' UTC; defaults to now")
     a = ap.parse_args(argv)
@@ -60,6 +60,8 @@ def main(argv: list[str] | None = None) -> int:
         elif st == "load":
             if a.target == "duckdb":
                 from signals.warehouse import load_duckdb as loader
+            elif a.target == "athena":
+                from signals.warehouse import load_athena as loader
             else:
                 from signals.warehouse import load_redshift as loader
             out = loader.run(cfg)
