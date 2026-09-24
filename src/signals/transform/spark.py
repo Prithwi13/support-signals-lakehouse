@@ -14,6 +14,8 @@ import uuid
 from pyspark.sql import DataFrame, SparkSession
 
 from signals import storage
+from signals.snapshots import current_version
+from signals.snapshots import pointer_uri as _pointer
 
 
 def get_spark(app: str = "support-signals") -> SparkSession:
@@ -31,15 +33,6 @@ def get_spark(app: str = "support-signals") -> SparkSession:
     spark = b.getOrCreate()
     spark.sparkContext.setLogLevel("WARN")
     return spark
-
-
-def _pointer(table_uri: str) -> str:
-    return f"{table_uri.rstrip('/')}/_current.json"
-
-
-def current_version(table_uri: str) -> str | None:
-    p = storage.read_json(_pointer(table_uri))
-    return p["version"] if p else None
 
 
 def read_table(spark: SparkSession, table_uri: str) -> DataFrame | None:
