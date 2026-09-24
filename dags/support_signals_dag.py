@@ -70,6 +70,7 @@ with DAG(
     to_gold = spark_stage("silver_to_gold", f"gold {FULL}")
     dq_gold = spark_stage("dq_gold", f"dq --layer gold {CW}")
     ml = spark_stage("ml_topics_and_risk", "ml")
-    load = cli("load_warehouse", f"load --target {'redshift' if MODE == 'aws' else 'duckdb'}")
+    target = os.environ.get("SIGNALS_WAREHOUSE_TARGET", "athena" if MODE == "aws" else "duckdb")
+    load = cli("load_warehouse", f"load --target {target}")
 
     ingest >> to_silver >> dq_silver >> to_gold >> dq_gold >> [ml, load]
