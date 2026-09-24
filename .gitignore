@@ -1,0 +1,17 @@
+data/
+*.duckdb
+*.duckdb.wal
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+spark-warehouse/
+metastore_db/
+derby.log
+.terraform/
+*.tfstate*
+.env
+dist/
+build/
+*.egg-info/
+airflow/logs/
