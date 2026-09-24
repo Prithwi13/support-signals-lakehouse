@@ -1,0 +1,23 @@
+# Local Airflow (standalone: scheduler + webserver + SQLite) running the real DAG.
+#   make airflow      -> http://localhost:8080  (user: admin, password printed in logs / standalone_admin_password.txt)
+services:
+  airflow:
+    build: {context: ., dockerfile: docker/Dockerfile.airflow}
+    command: standalone
+    ports: ["8080:8080"]
+    environment:
+      SIGNALS_RUN_MODE: local
+      SIGNALS_REPO_DIR: /opt/airflow/project
+      SIGNALS_STORAGE_ROOT: /opt/airflow/project/data
+      SIGNALS_STATE_ROOT: /opt/airflow/project/data/_state
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      AWS_PROFILE: ${AWS_PROFILE:-default}   # only used when SIGNALS_RUN_MODE=aws
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/dags
+    volumes:
+      - ./dags:/opt/airflow/project/dags
+      - ./src:/opt/airflow/project/src
+      - ./config:/opt/airflow/project/config
+      - ./sql:/opt/airflow/project/sql
+      - ./data:/opt/airflow/project/data
+      - ${HOME}/.aws:/home/airflow/.aws:ro
