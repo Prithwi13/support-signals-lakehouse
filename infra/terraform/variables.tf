@@ -41,3 +41,15 @@ variable "force_destroy" {
   type        = bool
   default     = true
 }
+
+variable "enable_redshift" {
+  description = "Create Redshift Serverless (needs a paid-plan account). Athena is always created."
+  type        = bool
+  default     = false
+}
+
+variable "athena_bytes_scanned_cutoff" {
+  description = "Per-query scan limit for the Athena workgroup (cost guardrail)"
+  type        = number
+  default     = 1073741824 # 1 GiB
+}

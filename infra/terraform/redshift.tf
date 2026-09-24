@@ -1,6 +1,9 @@
 # ------------------------------------------------------------------ Redshift Serverless
 # Billed only while queries run (per RPU-second). base_capacity 8 is the minimum.
+# Off by default: AWS Free-plan accounts can't create Redshift Serverless, and Athena
+# (athena.tf) serves the same gold tables. Set enable_redshift = true on a paid plan.
 resource "aws_redshiftserverless_namespace" "this" {
+  count                 = var.enable_redshift ? 1 : 0
   namespace_name        = var.project
   db_name               = "dev"
   admin_username        = "admin"
@@ -10,7 +13,8 @@ resource "aws_redshiftserverless_namespace" "this" {
 }
 
 resource "aws_redshiftserverless_workgroup" "this" {
-  namespace_name      = aws_redshiftserverless_namespace.this.namespace_name
+  count               = var.enable_redshift ? 1 : 0
+  namespace_name      = aws_redshiftserverless_namespace.this[0].namespace_name
   workgroup_name      = var.project
   base_capacity       = var.redshift_base_rpu
   publicly_accessible = false
