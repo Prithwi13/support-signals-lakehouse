@@ -1,0 +1,43 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: "17"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests dags glue dashboard
+      - run: pytest -q   # unit + end-to-end pipeline tests on a fake GitHub API
+
+  dag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - run: >
+          pip install "apache-airflow==2.10.3" apache-airflow-providers-amazon pytest
+          --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.10.3/constraints-3.11.txt
+      - run: airflow db migrate
+      - run: pytest -q tests/test_dag.py -p no:cacheprovider
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run: {working-directory: infra/terraform}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - run: mkdir -p ../../dist && cd ../../src && zip -qr ../dist/signals.zip signals
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
