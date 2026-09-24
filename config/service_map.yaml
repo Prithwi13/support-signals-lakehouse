@@ -1,0 +1,49 @@
+# Maps an issue to one AWS service. Rules are tried in order; first match wins.
+# 1) label rules (regex on label names, capture group 1 = service slug)
+# 2) keyword rules (regex on the title)
+# 3) the slug is normalized: sub-module suffixes stripped, then aliases applied,
+#    so "@aws-cdk/aws-lambda-nodejs" and "client-lambda" both roll up to "lambda".
+# Anything unmatched becomes "unknown" (tracked by a data quality check).
+
+strip_suffix_pattern: '-(alpha|v2|v2-alpha|targets|origins|tasks|nodejs|python|go|subscriptions|notifications|deployment|assets|layer-kubectl|integrations|authorizers|actions|patterns)$'
+
+aliases:
+  elasticloadbalancingv2: elb
+  elasticloadbalancing: elb
+  apigatewayv2: apigateway
+  api-gateway: apigateway
+  kinesisfirehose: firehose
+  certificatemanager: acm
+  events: eventbridge
+  logs: cloudwatch-logs
+  sfn: stepfunctions
+  sts: iam
+
+label_patterns:
+  - '^@aws-cdk/aws-([a-z0-9-]+)$'        # aws-cdk: "@aws-cdk/aws-lambda"
+  - '^aws-cdk-lib/aws-([a-z0-9-]+)$'
+  - '^service/([a-z0-9-]+)$'
+  - '^client-([a-z0-9-]+)$'              # aws-sdk-js-v3: "client-s3"
+  - '^([a-z0-9-]+)-service$'
+
+keyword_patterns:
+  s3: '\b(s3|bucket|presign|multipart)\b'
+  lambda: '\b(lambda|function url)\b'
+  dynamodb: '\b(dynamodb|dynamo)\b'
+  ec2: '\b(ec2|instance|ami|vpc|security group)\b'
+  iam: '\b(iam|sts|assume.?role|credentials?|sso)\b'
+  ecs: '\b(ecs|fargate)\b'
+  eks: '\b(eks|kubernetes|kubectl)\b'
+  cloudformation: '\b(cloudformation|cfn|stack)\b'
+  sqs: '\bsqs\b'
+  sns: '\bsns\b'
+  cloudwatch: '\b(cloudwatch|logs|alarm)\b'
+  rds: '\b(rds|aurora)\b'
+  apigateway: '\b(api ?gateway|apigw)\b'
+  kinesis: '\b(kinesis|firehose)\b'
+  glue: '\bglue\b'
+  bedrock: '\bbedrock\b'
+  secretsmanager: '\b(secrets ?manager)\b'
+  route53: '\broute ?53\b'
+  cloudfront: '\bcloudfront\b'
+  stepfunctions: '\b(step ?functions|sfn|state machine)\b'

@@ -1,0 +1,36 @@
+# Pipeline configuration. Every value can be overridden with an env var
+# (see src/signals/config.py). Paths may be local ("data/") or S3 ("s3://bucket/prefix").
+
+storage_root: data            # SIGNALS_STORAGE_ROOT
+state_root: data/_state       # SIGNALS_STATE_ROOT  (watermarks, run reports)
+
+github:
+  # Public AWS repos whose issues act as a proxy for "support cases".
+  repos:
+    - aws/aws-cli
+    - aws/aws-cdk
+    - aws/aws-sdk-js-v3
+    - boto/boto3
+  # First-ever run starts here. Later runs resume from the saved watermark.
+  initial_since: "2025-01-01T00:00:00Z"
+  per_page: 100
+  # Hard cap per repo per entity per run, so an unauthenticated run (60 req/hr)
+  # still finishes. Set GITHUB_TOKEN to get 5,000 req/hr and raise this.
+  max_pages_per_run: 10
+  request_timeout_s: 30
+  max_retries: 5
+  # Re-read this much time before the watermark each run to catch records
+  # whose updated_at landed out of order (late-arriving updates).
+  watermark_lookback_minutes: 60
+
+sla:
+  first_response_hours: 24     # an issue is "breached" if no maintainer reply within this
+  # Which comment authors count as a "first response". Finding from the real data:
+  # most AWS staff replies arrive as CONTRIBUTOR, not MEMBER, because org membership
+  # is private on GitHub. Using only MEMBER/OWNER left 98% of issues with no response.
+  responder_associations: [OWNER, MEMBER, COLLABORATOR, CONTRIBUTOR]
+  slow_resolution_days: 14     # label used by the escalation-risk model
+
+quality:
+  fail_on: error               # "error" | "warn" | "never"
+  cloudwatch_namespace: SupportSignals/DataQuality

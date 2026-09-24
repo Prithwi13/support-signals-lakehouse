@@ -1,0 +1,29 @@
+# Declarative data quality checks, run after each layer is written.
+# severity: error -> fails the pipeline run; warn -> recorded + alarmed, run continues.
+
+silver.issues:
+  - {check: row_count_min, min: 1, severity: error}
+  - {check: not_null, columns: [issue_id, repo, number, created_at, updated_at, state], severity: error}
+  - {check: unique, columns: [issue_id], severity: error}
+  - {check: accepted_values, column: state, values: [open, closed], severity: error}
+  - {check: expression, name: closed_after_created, expr: "closed_at IS NULL OR closed_at >= created_at", severity: error}
+  - {check: freshness, column: updated_at, max_age_hours: 168, severity: warn}
+
+silver.issue_comments:
+  - {check: not_null, columns: [comment_id, issue_key, created_at], severity: error}
+  - {check: unique, columns: [comment_id], severity: error}
+
+gold.fact_issue:
+  - {check: row_count_min, min: 1, severity: error}
+  - {check: unique, columns: [issue_id], severity: error}
+  - {check: not_null, columns: [repo_key, service_key, created_date_key], severity: error}
+  - {check: expression, name: non_negative_durations, expr: "(hours_to_first_response IS NULL OR hours_to_first_response >= 0) AND (hours_to_close IS NULL OR hours_to_close >= 0)", severity: error}
+  - {check: foreign_key, column: service_key, ref_table: gold.dim_service, ref_column: service_key, severity: error}
+  - {check: foreign_key, column: repo_key, ref_table: gold.dim_repo, ref_column: repo_key, severity: error}
+  - {check: max_null_fraction, column: first_response_at, max_fraction: 0.95, severity: warn}
+  - {check: max_fraction_equal, column: service_key, value: 0, max_fraction: 0.6, severity: warn, name: unknown_service_share}
+
+gold.dim_issue_scd2:
+  - {check: unique, columns: [issue_id, valid_from], severity: error}
+  - {check: scd2_one_current, key: issue_id, severity: error}
+  - {check: scd2_no_overlap, key: issue_id, severity: error}
