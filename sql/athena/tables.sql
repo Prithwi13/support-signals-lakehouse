@@ -18,7 +18,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS {db}.dim_service (
 CREATE EXTERNAL TABLE IF NOT EXISTS {db}.dim_issue_scd2 (
   issue_id bigint, issue_key string, state string, labels_str string, service_slug string,
   milestone string, assignee_count int, valid_from timestamp, valid_to timestamp,
-  is_current boolean, attr_hash string, _run_id string
+  is_current boolean, attr_hash string, `_run_id` string
 ) STORED AS PARQUET LOCATION '{loc_dim_issue_scd2}';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS {db}.bridge_issue_label (
